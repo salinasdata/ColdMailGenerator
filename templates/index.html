@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+
+<html lang="en" class="dark">
+<head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>{{context.title}}</title>
+</head>
+
+<body class="dark:bg-gray-900">
+<div class="flex items-center py-2 px-3">
+    <h1 class="text-3xl text-slate-300">{{context.title}}</h1>
+</div>
+<div class="py-2 px-3">
+    <div class="text-xl text-slate-300 mt-2">
+        This demo enables you to quickly analyze websites and creating the email. By providing the link to a website
+        of your choice, your OpenAI API key and Apify API token the content is being analyzed by ChatGPT and you will receive
+        a generated email.
+    </div>
+    <div class="text-xl text-slate-300 mt-2">
+        Note, that the demo is programmed, so that it compiles all information from the content even if exceeds the
+        OpenAI API token limit which is currently at 4096 characters. For more information have a look at the demo's
+        GitHub page: https://github.com/edgewaysai/ColdMailGenerator
+    </div>
+    <div class="text-xl text-slate-300 mt-2">
+        <a href="https://www.edgeways.ai/request-key"
+           class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100
+              focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2
+              dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600
+              dark:focus:ring-gray-700" target="_blank">Request OpenAI API key</a>
+    </div>
+    <div class="text-l text-slate-300 mt-2 text-yellow-500">
+        <small>Depending on the size of the content it will take a while to generate the output</small>
+    </div>
+</div>
+<br/>
+<div class="flex items-center py-2 px-3">
+    <div class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300
+    focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600
+    dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+        <form id="message-form" action="" onsubmit="sendMessage(event)">
+            <label for="website_url_id">Please provide the link to website</label>
+            <input class="flex justify-center block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border
+            border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600
+            dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                      type="text" id="website_url_id" autocomplete="off" maxlength="10000"/>
+            <label for="openai_key_id">Please provide the OpenAI API key</label>
+            <input class="flex justify-center block p-2.5 w-full text-sm text-gray-900 bg-gray-50
+            rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700
+            dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500
+            dark:focus:border-blue-500"
+                   type="text" id="openai_key_id" autocomplete="off"/>
+            <label for="apify_key_id">Please provide the APIFY API key</label>
+            <input class="flex justify-center block p-2.5 w-full text-sm text-gray-900 bg-gray-50
+            rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700
+            dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500
+            dark:focus:border-blue-500"
+                   type="text" id="apify_key_id" autocomplete="off"/>
+            <button class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100
+             focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2 dark:bg-gray-800
+             dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600
+             dark:focus:ring-gray-700">
+                Submit
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="flex items-center py-2 px-3">
+    <h2
+            class="text-2xl text-slate-400 overline decoration-4 decoration-pink-500"
+    >
+        {{context.log_file}}
+    </h2>
+</div>
+
+<div class="flex items-center py-2 px-3">
+    <div
+            id="logs"
+            class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300
+             focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400
+             dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+    >
+    </div>
+</div>
+
+<script>
+    var ws_log = new WebSocket("ws://{{context.host_url}}/ws/");
+    var form = document.getElementById('message-form');
+    ws_log.onmessage = function (event) {
+        var logs = document.getElementById("logs");
+        var log_data = event.data;
+        logs.innerHTML += "<div>" + log_data + "</div>";
+    };
+
+    form.onsubmit = function (e) {
+        e.preventDefault();
+        var website_url_id = document.getElementById("website_url_id");
+        var openai_key_id = document.getElementById("openai_key_id");
+        var apify_ket_id = document.getElementById("apify_key_id");
+        var params = {
+            website_url: website_url_id.value,
+            openai_key: openai_key_id.value,
+            apify_key: apify_ket_id.value
+        }
+        ws_log.send(JSON.stringify(params));
+        logs.innerHTML = "";
+        return false;
+    };
+
+</script>
+</body>
+</html>
