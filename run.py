@@ -15,7 +15,7 @@ templates = Jinja2Templates(directory=str(Path(BASE_DIR, 'templates')))
 log_file = "Your Results"
 
 port = os.environ.get("PORT") or 8000
-host_url = os.environ.get("HOST") or "0.0.0.0:8000"
+host_url = os.environ.get("HOST") or "cold-mail-generator.azurewebsites.net"
 
 app = FastAPI(title='Cold Mail Generator Demo')
 
