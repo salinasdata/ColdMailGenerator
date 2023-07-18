@@ -84,7 +84,7 @@
 </div>
 
 <script>
-    var ws_log = new WebSocket("ws://{{context.host_url}}/ws/");
+    var ws_log = new WebSocket("wss://{{context.host_url}}/ws/");
     var form = document.getElementById('message-form');
     ws_log.onmessage = function (event) {
         var logs = document.getElementById("logs");
