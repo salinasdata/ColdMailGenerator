@@ -11,6 +11,7 @@ uvicorn = "*"
 apify-client = "*"
 jinja2 = "*"
 websockets = "*"
+tiktoken = "*"
 
 [dev-packages]
 
