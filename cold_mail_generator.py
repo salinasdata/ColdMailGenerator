@@ -1,10 +1,11 @@
 import asyncio
 
+from fastapi import WebSocket
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders.base import Document
+from langchain.text_splitter import CharacterTextSplitter
 from langchain.utilities import ApifyWrapper
-from fastapi import WebSocket
 
 
 class Analyze:
@@ -35,66 +36,7 @@ class Analyze:
 
     async def get_chain(self):
         chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.3)
-        return load_qa_chain(chat, chain_type="stuff")
-
-    @staticmethod
-    async def create_sentences(segments, MIN_WORDS, MAX_WORDS):
-        # Combine the non-sentences together
-        sentences = []
-
-        is_new_sentence = True
-        sentence_length = 0
-        sentence_num = 0
-        sentence_segments = []
-
-        for i in range(len(segments)):
-            if is_new_sentence == True:
-                is_new_sentence = False
-            # Append the segment
-            sentence_segments.append(segments[i])
-            segment_words = segments[i].split(' ')
-            sentence_length += len(segment_words)
-
-            # If exceed MAX_WORDS, then stop at the end of the segment
-            # Only consider it a sentence if the length is at least MIN_WORDS
-            if (sentence_length >= MIN_WORDS and segments[i][
-                -1] == '.') or sentence_length >= MAX_WORDS:
-                sentence = ' '.join(sentence_segments)
-                sentences.append({
-                    'sentence_num': sentence_num,
-                    'text': sentence,
-                    'sentence_length': sentence_length
-                })
-                # Reset
-                is_new_sentence = True
-                sentence_length = 0
-                sentence_segments = []
-                sentence_num += 1
-
-        return sentences
-
-    @staticmethod
-    async def get_chunks(docs: list) -> list:
-        """
-        Function to break a large text into chunks
-        """
-        chunks_list = []
-        for doc in docs:
-            segments = doc.page_content.split('.')
-            segments = [segment + '.' for segment in segments]
-            # Further split by comma
-            segments = [segment.split(',') for segment in segments]
-            # Flatten
-            segments = [item for sublist in segments for item in sublist]
-            sentences = await Analyze.create_sentences(segments, MIN_WORDS=20,
-                                                       MAX_WORDS=80)
-            CHUNK_LENGTH = 5
-            STRIDE = 1
-            for i in range(0, len(sentences), (CHUNK_LENGTH - STRIDE)):
-                chunk = ' '.join(
-                    [item['text'] for item in sentences[i:i + CHUNK_LENGTH]])
-                chunks_list.append(Document(page_content=chunk, metadata=doc.metadata))
-        return chunks_list
+        return load_qa_chain(chat, chain_type="map_reduce")
 
     async def logger(self, message: str, websocket: WebSocket):
         print(message)
@@ -112,7 +54,9 @@ class Analyze:
         docs = await self.get_docs()
         await self.logger("Docs are collected!", websocket)
         await self.logger("Collecting chunks...", websocket)
-        chunks = await self.get_chunks(docs)
+        # Split the long document into smaller chunks
+        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+        documents = text_splitter.split_documents(docs)
         await self.logger("Chunks are collected!", websocket)
         await self.logger("Get chain...", websocket)
 
@@ -121,7 +65,7 @@ class Analyze:
 
         await self.logger("Generating email...", websocket)
 
-        email = chain.run(input_documents=chunks, question=template_prompt)
+        email = chain.run(input_documents=documents, question=template_prompt)
         await self.logger("", websocket)
 
         await self.logger(f"<pre style='white-space: pre-wrap;'>{email}</pre>",
