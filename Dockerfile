@@ -8,8 +8,10 @@ WORKDIR /usr/src/app
 COPY . .
 
 # install the packages from the Pipfile in the container
+RUN export HNSWLIB_NO_NATIVE=1
 RUN pip install pipenv
 RUN pipenv install --system --deploy --ignore-pipfile
+
 
 # expose the port that uvicorn will run the app on
 ENV PORT=8000
