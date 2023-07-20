@@ -247,21 +247,6 @@
             "markers": "python_full_version >= '3.7.0'",
             "version": "==3.2.0"
         },
-        "chroma-hnswlib": {
-            "hashes": [
-                "sha256:38f51585d81a5072db70b17207afd1f57670c209836d0fbbf2a1aa7e8bece6b7",
-                "sha256:f72592dc7d0522c25cc1f8864db7a3781f179ba989f209cc3ea01694c0d76493"
-            ],
-            "version": "==0.7.1"
-        },
-        "chromadb": {
-            "hashes": [
-                "sha256:38292ab647a86ea97a697b063cbab23edad0b28afd6a85049b1d8c7ccd0b3534",
-                "sha256:e5bef53a14485f5d4e1f8332c503d026ce4efde382db59a5f128897b2969fe91"
-            ],
-            "index": "pypi",
-            "version": "==0.4.2"
-        },
         "click": {
             "hashes": [
                 "sha256:48ee849951919527a045bfe3bf7baa8a959c423134e1a5b98c05c20ba75a1cbd",
