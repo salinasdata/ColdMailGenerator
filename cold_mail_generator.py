@@ -1,11 +1,14 @@
 import asyncio
 
 from fastapi import WebSocket
-from langchain.chains.question_answering import load_qa_chain
+from langchain import OpenAI
+from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 from langchain.document_loaders.base import Document
+from langchain.embeddings import OpenAIEmbeddings
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.utilities import ApifyWrapper
+from langchain.vectorstores import Chroma
 
 
 class Analyze:
@@ -34,9 +37,11 @@ class Analyze:
         loader = await self.get_loader()
         return loader.load()
 
-    async def get_chain(self):
+    async def get_chain(self, retriever):
         chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.3)
-        return load_qa_chain(chat, chain_type="stuff")
+        qa = RetrievalQA.from_chain_type(llm=chat, chain_type="stuff",
+                                         retriever=retriever)
+        return qa
 
     async def logger(self, message: str, websocket: WebSocket):
         print(message)
@@ -58,16 +63,22 @@ class Analyze:
         text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
         documents = text_splitter.split_documents(docs)
         await self.logger("Chunks are collected!", websocket)
+        await self.logger("Select which embeddings to use..", websocket)
+        embeddings = OpenAIEmbeddings()
+        db = Chroma.from_documents(documents, embeddings)
+        retriever = db.as_retriever(search_type='similarity', searhc_kwargs={"k": 2})
+
         await self.logger("Get chain...", websocket)
 
-        chain = await self.get_chain()
+        chain = await self.get_chain(retriever)
         await self.logger("Chain generated!", websocket)
 
         await self.logger("Generating email...", websocket)
-
-        email = chain.run(input_documents=documents, question=template_prompt)
+        email = chain({"query": template_prompt})
         await self.logger("", websocket)
 
-        await self.logger(f"<pre style='white-space: pre-wrap;'>{email}</pre>",
+        await self.logger(f"<pre style='white-space: pre-wrap;'>"
+                          f"{email.get('result')}</pre>",
                           websocket)
+        db.delete()
         await self.logger("", websocket)
