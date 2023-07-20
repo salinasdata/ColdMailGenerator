@@ -11,6 +11,7 @@ COPY . .
 RUN export HNSWLIB_NO_NATIVE=1
 RUN pip install pipenv
 RUN pipenv install --system --deploy --ignore-pipfile
+RUN pip install chromadb
 
 
 # expose the port that uvicorn will run the app on
