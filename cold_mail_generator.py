@@ -36,7 +36,7 @@ class Analyze:
 
     async def get_chain(self):
         chat = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.3)
-        return load_qa_chain(chat, chain_type="map_reduce")
+        return load_qa_chain(chat, chain_type="stuff")
 
     async def logger(self, message: str, websocket: WebSocket):
         print(message)
